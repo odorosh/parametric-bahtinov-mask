@@ -1,0 +1,23 @@
+# FreeCAD temporary and backup files
+*.bak
+*~
+*.log
+*.lock
+*.FCStd1
+*.FCStd?
+
+# LaTeX temporary files
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.synctex.gz
+*.toc
+*.out
+*.blg
+*.bbl
+*.pdf
+
+# OS generated files
+.DS_Store
+.directory
