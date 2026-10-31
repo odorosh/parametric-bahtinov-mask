@@ -61,11 +61,11 @@ def make_grating(angle_deg, side_sign=0):
     return all_slots.common(cutter)
 
 # 5. Generate and isolate individual diffraction zones
-# Спочатку створюємо абсолютно суцільну заготовку
-# (Основа + глухий центр + місток) як один моноліт
+# First, we create a completely solid blank
+# (Base + solid center + bridge) as a single monolith
 blank_solid = mask_body
 
-# Тепер генеруємо щілини (решітку)
+# Now, let's generate the slits (the grating).
 lower_cutter = Part.makeBox(D + 20, D + 20, thickness)
 lower_cutter.translate(App.Vector(-(D + 20)/2.0, -(D + 20), 0))
 vertical_zone = make_grating(0).common(lower_cutter)
@@ -76,55 +76,53 @@ upper_cutter.translate(App.Vector(-(D + 20)/2.0, 0, 0))
 left_zone = make_grating(-20, side_sign=-1).common(upper_cutter)
 right_zone = make_grating(20, side_sign=1).common(upper_cutter)
 
-# Об'єднуємо всі щілини в один загальний різальний інструмент (Compound)
+# Combine all the slots into a single cutting tool (Compound)
 all_slots = vertical_zone.fuse(left_zone).fuse(right_zone)
 
-# Готуємо зони, які НЕ МОЖНА різати (захист центру і містка)
+# Preparing the zones that MUST NOT be cut (protecting the center and the bridge)
 central_protection = Part.makeCylinder(D_obs / 2.0, thickness)
 bridge_protection = Part.makeBox(D + 20.0, bridge_w, thickness)
 bridge_protection.translate(App.Vector(-(D + 20.0) / 2.0, -bridge_w / 2.0, 0))
 
-# Очищуємо інструмент різання: прибираємо щілини з містка та центру
+# Cleaning the cutting tool: removing debris from the bridge and the center.
 final_cutting_tool = all_slots.cut(central_protection).cut(bridge_protection)
 
-# ОДНА ОПЕРАЦІЯ ВИРІЗАННЯ: віднімаємо щілини від суцільного диска апертури
+# SINGLE CUTTING OPERATION: subtract the slots from the solid aperture disk
 aperture_disk = Part.makeCylinder(D / 2.0, thickness)
 slotted_aperture = aperture_disk.cut(final_cutting_tool)
 
-# З'єднуємо апертуру із зовнішнім посадковим кільцем
+# SINGLE CUTTING OPERATION: subtract the slots from the solid aperture disk
 bahtinov_mask = blank_solid.fuse(slotted_aperture)
 
-# Застосовуємо фінальне згладжування швів
+# We apply a final smoothing of the seams.
 clean_bahtinov_mask = bahtinov_mask.removeSplitter()
 
-# Реєструємо фінальний об'єкт у дереві FreeCAD
+# Registering the final object in the FreeCAD tree
 mask_obj = doc.addObject("Part::Feature", "Bahtinov_SkyMax127_Perfect")
 mask_obj.Shape = clean_bahtinov_mask
 doc.recompute()
 
-print("Проєкт повністю оптимізовано! Модель ідеально чиста.")
 # =========================================================
 
 # =========================================================
-# 6. НАДІЙНИЙ ЕКСПОРТ У ВАШУ РОБОЧУ ПАПКУ
+# 6. Export
 # =========================================================
-# ВСТАВТЕ СЮДИ ВАШ ТОЧНИЙ ШЛЯХ, ЯКИЙ ПОКАЗАЛА КОМАНДА `pwd`
-target_dir = "/home/user/projects/bahtinov"
+#
+target_dir = "/pathtoproject"
 
 # Формуємо точні шляхи до інженерних файлів
 stl_path = os.path.join(target_dir, "Bahtinov_SkyMax127.stl")
 step_path = os.path.join(target_dir, "Bahtinov_SkyMax127.step")
 fcstd_path = os.path.join(target_dir, "Bahtinov_SkyMax127.FCStd")
 
-# Експортуємо інженерні формати
+# Export files STEP ans STL
 Part.export([mask_obj], stl_path)
 Part.export([mask_obj], step_path)
 
-# Додатково автоматично зберігаємо рідний файл FreeCAD для ручного редагування
-doc.saveAs(fcstd_path)
+# Additionally, we automatically save the native FreeCAD file for manual editingdoc.saveAs(fcstd_path)
 
-print(f"\n[УСПІХ] Усі файли записано безпосередньо у вашу папку:")
-print(f"1. STL (для 3D-друку): {stl_path}")
-print(f"2. STEP (для CAD/редагування): {step_path}")
-print(f"3. FCStd (проєкт FreeCAD): {fcstd_path}")
+print(f"\n[SUCCESS] All files have been written directly to the folder:")
+print(f"1. STL (for 3D-print): {stl_path}")
+print(f"2. STEP (for CAD/editing): {step_path}")
+print(f"3. FCStd (project FreeCAD): {fcstd_path}")
 # =========================================================
